@@ -26,16 +26,6 @@ def get_knn(point, data, k):
 	return point_prediction
 
 
-def parse_data(dataset_path):
-	with open(dataset_path) as file:
-		content = file.readlines()
-	# you may also want to remove whitespace characters like `\n` at the end of each line
-	parsed_data = [row.strip().split('\t') for row in content]
-	# convert the data to be list of ([features], label) without the first row(features headlines)
-	parsed_data = [(row[:-1], row[-1]) for row in parsed_data[1:]]
-	return parsed_data
-
-
 if __name__ == "__main__":
 	import argparse
 
