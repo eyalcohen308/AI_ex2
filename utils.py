@@ -1,8 +1,42 @@
 import unittest
 import random
 from string import digits
+from collections import Counter
 
 DATASET_PATH = "./dataset.txt"
+
+
+class Dicts:
+	def __init__(self, dataset):
+		yes_list, no_list = [], []
+		for x in dataset:
+			(no_list, yes_list)[x[1] == "yes"].append(x[0])
+		yes_list_size = len(yes_list)
+		no_list_size = len(no_list)
+
+		self.prior_yes = yes_list_size / len(dataset)
+		self.prior_no = no_list_size / len(dataset)
+		yes_T = list(map(list, zip(*yes_list)))
+		no_T = list(map(list, zip(*no_list)))
+		non_normalize_yes = [Counter(col) for col in yes_T]
+		non_normalize_no = [Counter(col) for col in no_T]
+
+		self.yes_features_probs = [{k: v / yes_list_size for k, v in dic.items()} for dic in non_normalize_yes]
+		self.no_features_probs = [{k: v / no_list_size for k, v in dic.items()} for dic in non_normalize_no]
+
+	def get_prob_feature(self, feature, col, label):
+		if label == "yes":
+			answer = self.yes_features_probs[col].get(feature)
+		else:
+			answer = self.no_features_probs[col].get(feature)
+
+		if not answer:
+			raise KeyError("Key '{0}' does not exists in '{1}' features".format(feature, label))
+
+		return answer
+
+	def get_prior(self, label):
+		return self.prior_yes if label == "yes" else self.prior_no
 
 
 class TestUtils(unittest.TestCase):
@@ -67,12 +101,6 @@ def generete_hamming_examples(test_size, unmatch_num):
 	return str1, ''.join(str2_list)
 
 
-def calculate_acu(train, test, algorithm):
-	# sum all the right answers (prediction = tag(example[1]).
-	correct_answers = sum([algorithm.get_point_prediction(train, example) == example[1] for example in test])
-	return correct_answers / len(test)
-
-
 def split_to_k_lists(data, k, shuffle=False):
 	"""
 	Created list of n lists from given list.
@@ -99,29 +127,32 @@ def k_cross_validation_acu(algorithm, data, k, shuffle=False):
 		del train[i]
 		train = [item for sublist in train for item in sublist]
 		test = k_lists[i]
-		iter_acu = calculate_acu(train, test, algorithm)
+		iter_acu = algorithm.get_accuracy_on_test(train, test)
 		avg_acu += iter_acu
 		print("Iteration {0}/{1} | Algorithm: {2} | accuracy: {3}".format(i + 1, k, type(algorithm).__name__, iter_acu))
 	avg_acu /= k
-	print("Finished Calculate accuracy\n")
+	print("Finished Calculate accuracy")
 	print("Algorithm: {0} Aaccuracy: {1}".format(type(algorithm).__name__, avg_acu))
 
 
 if __name__ == "__main__":
-	# unittest.main()
-	lists = [
-		[1, 1, 1, 1],
-		[1, 1, 1, 1],
-		[1, 1, 1, 1],
-		[1, 1, 1, 1],
-		[2, 2, 2, 2],
-		[2, 2, 2, 2],
-		[2, 2, 2, 2],
-		[2, 2, 2, 2],
-		[3, 3, 3, 3],
-		[3, 3, 3, 3],
-		[3, 3, 3, 3],
-		[3, 3, 3, 3]
-	]
-	liststs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-	print(split_to_k_lists(liststs, 2))
+	data = parse_data(DATASET_PATH)
+	dicts = Dicts(data)
+	print(dicts)
+# unittest.main()
+# lists = [
+# 	[1, 1, 1, 1],
+# 	[1, 1, 1, 1],
+# 	[1, 1, 1, 1],
+# 	[1, 1, 1, 1],
+# 	[2, 2, 2, 2],
+# 	[2, 2, 2, 2],
+# 	[2, 2, 2, 2],
+# 	[2, 2, 2, 2],
+# 	[3, 3, 3, 3],
+# 	[3, 3, 3, 3],
+# 	[3, 3, 3, 3],
+# 	[3, 3, 3, 3]
+# ]
+# liststs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+# print(split_to_k_lists(liststs, 2))
