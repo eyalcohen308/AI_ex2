@@ -52,11 +52,12 @@ class TestUtils(unittest.TestCase):
 		self.assertEqual(hamming_distance(*generete_hamming_examples(20, 20)), 20)
 
 
-def parse_data(dataset_path, shuffle=False):
+def parse_data(dataset_path, shuffle=False, with_feature_names=False):
 	"""
 	Parse data to line of features. data type: [([features], tag)].
 	:param dataset_path: dataset path.
 	:param shuffle if want to shuffle the data.
+	:param with_feature_names if want to include features name (first row).
 	:return: parsed data set list.
 	"""
 	with open(dataset_path) as file:
@@ -64,10 +65,11 @@ def parse_data(dataset_path, shuffle=False):
 	# you may also want to remove whitespace characters like `\n` at the end of each line
 	parsed_data = [row.strip().split('\t') for row in content]
 	# convert the data to be list of ([features], label) without the first row(features headlines)
-	parsed_data = [(row[:-1], row[-1]) for row in parsed_data[1:]]
+	parsed_no_feature_names = [(row[:-1], row[-1]) for row in parsed_data[1:]]
 	if shuffle:
-		random.shuffle(parsed_data)
-	return parsed_data
+		random.shuffle(parsed_no_feature_names)
+
+		return parsed_no_feature_names, with_feature_names if with_feature_names else parsed_no_feature_names
 
 
 def hamming_distance(point1, point2):
@@ -119,6 +121,15 @@ def split_to_k_lists(data, k, shuffle=False):
 	return cross_validation_list
 
 
+def get_I2F(feature_names):
+	"""
+	Create index to feature dictionary
+	:param feature_names: list of feature names.
+	:return: dictionary.
+	"""
+	return dict(enumerate(feature_names))
+
+
 def k_cross_validation_acu(algorithm, data, k, shuffle=False):
 	k_lists = split_to_k_lists(data, k, shuffle)
 	avg_acu = 0
@@ -136,7 +147,8 @@ def k_cross_validation_acu(algorithm, data, k, shuffle=False):
 
 
 if __name__ == "__main__":
-	data = parse_data(DATASET_PATH)
+	data, feature_names = parse_data(DATASET_PATH, with_feature_names=True)
+	I2F = get_I2F(feature_names)
 	dicts = Dicts(data)
 	print(dicts)
 # unittest.main()
