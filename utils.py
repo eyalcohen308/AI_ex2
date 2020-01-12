@@ -8,6 +8,7 @@ DATASET_PATH = "./dataset.txt"
 
 class Dicts:
 	def __init__(self, dataset):
+		dataset_T = list(map(list, zip(*[features[0] for features in dataset])))
 		yes_list, no_list = [], []
 		for x in dataset:
 			(no_list, yes_list)[x[1] == "yes"].append(x[0])
@@ -24,6 +25,8 @@ class Dicts:
 		self.yes_features_probs = [{k: v / yes_list_size for k, v in dic.items()} for dic in non_normalize_yes]
 		self.no_features_probs = [{k: v / no_list_size for k, v in dic.items()} for dic in non_normalize_no]
 
+		self.attributes_sets = [set(attribute_col) for attribute_col in dataset_T]
+
 	def get_prob_feature(self, feature, col, label):
 		if label == "yes":
 			answer = self.yes_features_probs[col].get(feature)
@@ -39,6 +42,13 @@ class Dicts:
 		return self.prior_yes if label == "yes" else self.prior_no
 
 
+def shuffle_data(data, tags):
+	zipped = list(zip(data, tags))
+	random.shuffle(zipped)
+	shuffled_data, shuffled_tags = zip(*zipped)
+	return shuffled_data, shuffled_tags
+
+
 class TestUtils(unittest.TestCase):
 
 	def test_hamming_distance(self):
@@ -52,24 +62,28 @@ class TestUtils(unittest.TestCase):
 		self.assertEqual(hamming_distance(*generete_hamming_examples(20, 20)), 20)
 
 
-def parse_data(dataset_path, shuffle=False, with_feature_names=False):
+def parse_data(dataset_path, shuffle=False, with_attributes_names=False):
 	"""
 	Parse data to line of features. data type: [([features], tag)].
 	:param dataset_path: dataset path.
 	:param shuffle if want to shuffle the data.
-	:param with_feature_names if want to include features name (first row).
-	:return: parsed data set list.
+	:param with_attributes_names index to feature dict.
+	:return: parsed dataset list, tags of dataset and features set to index dicts (or not).
 	"""
 	with open(dataset_path) as file:
 		content = file.readlines()
 	# you may also want to remove whitespace characters like `\n` at the end of each line
 	parsed_data = [row.strip().split('\t') for row in content]
+	features_names = parsed_data[0][:-1]
 	# convert the data to be list of ([features], label) without the first row(features headlines)
-	parsed_no_feature_names = [(row[:-1], row[-1]) for row in parsed_data[1:]]
+	parsed_data = [(row[:-1], row[-1]) for row in parsed_data[1:]]
 	if shuffle:
-		random.shuffle(parsed_no_feature_names)
+		random.shuffle(parsed_data)
 
-		return parsed_no_feature_names, with_feature_names if with_feature_names else parsed_no_feature_names
+	if with_attributes_names:
+		return parsed_data, features_names
+	else:
+		return parsed_data
 
 
 def hamming_distance(point1, point2):
@@ -130,6 +144,14 @@ def get_I2F(feature_names):
 	return dict(enumerate(feature_names))
 
 
+def get_tags_from_data(dataset):
+	return [tup[1] for tup in dataset]
+
+
+def argmax(l):
+	return max(range(len(l)), key=l.__getitem__)
+
+
 def k_cross_validation_acu(algorithm, data, k, shuffle=False):
 	k_lists = split_to_k_lists(data, k, shuffle)
 	avg_acu = 0
@@ -147,8 +169,7 @@ def k_cross_validation_acu(algorithm, data, k, shuffle=False):
 
 
 if __name__ == "__main__":
-	data, feature_names = parse_data(DATASET_PATH, with_feature_names=True)
-	I2F = get_I2F(feature_names)
+	data, I2F = parse_data(DATASET_PATH, with_attributes_names=True)
 	dicts = Dicts(data)
 	print(dicts)
 # unittest.main()
