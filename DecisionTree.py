@@ -3,15 +3,39 @@ from Algorithms import DistanceAlgorithm
 from utils import *
 
 
+def get_dtl_default(train):
+	tags = get_tags_from_data(train)
+	default = mode(tags)
+	return default
+
+
 class DecisionTree(DistanceAlgorithm):
-	def __init__(self, attributes, default):
+	# def __init__(self, attributes, default):
+	# 	super(DecisionTree, self).__init__()
+	# 	self.tree = DTL(examples, attributes, default)
+
+	def __init__(self, examples):
 		super(DecisionTree, self).__init__()
-		self.tree = DTL(examples, attributes, default)
+
+		dicts = Dicts(examples)
+		attributes_values = dicts.attributes_sets
+		attributes = [(i, values) for i, values in enumerate(attributes_values)]
+		self.attributes = attributes
+		self.print_examples = examples
+		self.print_default = get_dtl_default(examples)
+		self.tree = ""
 
 	def get_accuracy_on_test(self, train, test):
-		# TODO: need to understand how to run on the tree
-		correct_answers = sum([get_knn_prediction(example, train, self.k) == example[1] for example in test])
+		default = get_dtl_default(train)
+		self.tree = DTL(train, self.attributes, default)
+
+		correct_answers = sum([DTL_predict(self.tree, example) == example[1] for example in test])
 		return correct_answers / len(test)
+
+	def print_tree(self, I2F):
+		with open("tree.txt", 'w') as file:
+			self.tree = DTL(self.print_examples, self.attributes, self.print_default)
+			print_tree_recursive(self.tree, I2F, file)
 
 
 class Node:
@@ -22,8 +46,17 @@ class Node:
 	def add_child(self, node, value):
 		self.children.append((node, value))
 
+	def get_child_by_edge(self, given_edge):
+		for child, edge in self.children:
+			if edge == given_edge:
+				return child
+		raise IndexError("didn't find child in tree by feature value")
+
 	def is_leaf(self):
 		return not self.children
+
+	def get_attribute(self):
+		return self.attribute
 
 	def __int__(self):
 		return self.attribute
@@ -70,7 +103,7 @@ def choose_attribute(attributes, examples):
 	return attributes[argmax(values)]
 
 
-def print_tree(root, I2F, file, layer=0):
+def print_tree_recursive(root, I2F, file, layer=0):
 	for child, edge in sorted(root.children, key=lambda ch: ch[1]):
 		prefix = ("\t" * layer) + ("|" if layer else "")
 		if child.is_leaf():
@@ -81,7 +114,7 @@ def print_tree(root, I2F, file, layer=0):
 			line = prefix + "{0}={1}".format(I2F[int(root)], edge)
 			print(line)
 			file.write(line + "\n")
-			print_tree(child, I2F, file,layer + 1)
+			print_tree_recursive(child, I2F, file, layer + 1)
 
 
 def DTL(examples, attributes, default):
@@ -105,27 +138,32 @@ def DTL(examples, attributes, default):
 			attributes_no_best = list(filter(lambda tup: tup[0] != best_attribute, attributes_no_best))
 
 			subtree = DTL(examples_value, attributes_no_best, mode(labels))
-			# TODO: add a branch to tree with label v_i and subtree subtree maybe this implementation:
 			tree.add_child(subtree, value)
 	return tree
+
+
+def DTL_predict(tree: Node, example):
+	example_features = example[0]
+	current_node = tree
+	while not current_node.is_leaf():
+		node_attribute = current_node.get_attribute()
+		attribute_value = example_features[node_attribute]
+		current_node = current_node.get_child_by_edge(attribute_value)
+	return str(current_node)
 
 
 if __name__ == "__main__":
 	import argparse
 
 	parser = argparse.ArgumentParser(description="AI Ex3")
-	parser.add_argument("--k_cross", help="choose k for k cross validation. default k is 5", type=int, default=5)
-	parser.add_argument("--knn", help="choose k for k nearest neighbors. default k is 5", type=int, default=5)
+	parser.add_argument("--k_cross", help="choose k for k cross validation. default k is 5.", type=int, default=5)
+	parser.add_argument("--knn", help="choose k for k nearest neighbors. default k is 5.", type=int, default=5)
+	parser.add_argument("--save_tree", help="if you want to save the tree to txt file.", action="store_true")
 	args = parser.parse_args()
-	examples, feature_names = parse_data(DATASET_PATH, with_attributes_names=True)
-	I2F = get_I2F(feature_names)
-	dicts = Dicts(examples)
-	tags = get_tags_from_data(examples)
-	default = mode(tags)
-	attributes_values = dicts.attributes_sets
-	# attributes = list(range(len(feature_names)))
-	attributes = [(i, values) for i, values in enumerate(attributes_values)]
-	algorithm = DecisionTree(attributes, default)
-	with open("tree.txt", 'w') as file:
-		print_tree(algorithm.tree, I2F, file)
-	# k_cross_validation_acu(algorithm, data, args.k_cross)
+
+	data, feature_names = parse_data(DATASET_PATH, with_attributes_names=True)
+	algorithm = DecisionTree(data)
+	if args.save_tree:
+		I2F = get_I2F(feature_names)
+		algorithm.print_tree(I2F)
+	k_cross_validation_acu(algorithm, data, args.k_cross)
