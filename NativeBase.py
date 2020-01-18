@@ -1,4 +1,4 @@
-from Algorithms import DistanceAlgorithm
+from Algorithms import ModelAlgorithm
 from utils import *
 
 
@@ -32,7 +32,7 @@ def get_naive_base_prediction(point, features_dicts):
 	return "yes" if point_yes_prob >= point_no_prob else "no"
 
 
-class NaiveBase(DistanceAlgorithm):
+class NaiveBase(ModelAlgorithm):
 	def __init__(self):
 		super(NaiveBase, self).__init__()
 

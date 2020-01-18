@@ -98,7 +98,12 @@ def most_frequent(List):
 	:param List: list
 	:return: most frequent value.
 	"""
-	return max(set(List), key=List.count)
+	data = Counter(List)
+	if len(data) == 2:
+		most_common, second_common = data.most_common(2)
+		if most_common[1] == second_common[1]:
+			return "yes"
+	return data.most_common(1)[0][0]
 
 
 def generete_hamming_examples(test_size, unmatch_num):
@@ -164,7 +169,7 @@ def k_cross_validation_acu(algorithm, data, k, shuffle=False):
 		avg_acu += iter_acu
 		print("Iteration {0}/{1} | Algorithm: {2} | accuracy: {3}".format(i + 1, k, type(algorithm).__name__, iter_acu))
 	avg_acu /= k
-	print("Finished Calculate accuracy")
+	print("------- Finished Calculate accuracy -------")
 	print("Algorithm: {0} Aaccuracy: {1}".format(type(algorithm).__name__, avg_acu))
 
 

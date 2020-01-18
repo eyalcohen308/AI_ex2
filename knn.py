@@ -1,4 +1,4 @@
-from Algorithms import DistanceAlgorithm
+from Algorithms import ModelAlgorithm
 from utils import *
 
 
@@ -26,7 +26,7 @@ def get_knn_prediction(point, data, k):
 	return point_prediction
 
 
-class KNN(DistanceAlgorithm):
+class KNN(ModelAlgorithm):
 	def __init__(self, k):
 		super(KNN, self).__init__()
 		self.k = k

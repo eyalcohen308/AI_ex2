@@ -1,5 +1,5 @@
 from math import log2
-from Algorithms import DistanceAlgorithm
+from Algorithms import ModelAlgorithm
 from utils import *
 
 
@@ -9,7 +9,47 @@ def get_dtl_default(train):
 	return default
 
 
-class DecisionTree(DistanceAlgorithm):
+def all_leaves_class(node):
+	answers = []
+	for child, _ in node.children:
+		if child.is_leaf():
+			return str(child)
+		else:
+			answers.append(all_leaves_class(child))
+	if None in answers or len(set(answers)) > 1:
+		return None
+	else:
+		return answers[0]
+
+
+def prune_the_tree(node):
+	answers = []
+	for child, _ in node.children:
+
+		if child.is_leaf():
+			answers.append(str(child))
+		else:
+			answers.append(prune_the_tree(child))
+
+	if len(set(answers)) == 1 and answers[0] is not None:
+		node.attribute = answers[0]
+		node.children = []
+		return answers[0]
+	else:
+		return None
+
+
+#
+# if not child.is_leaf():
+# 	tag = all_leaves_class(child)
+# 	if tag:
+# 		node.attribute = tag
+# 		node.children = []
+# 	else:
+# 		prune_the_tree(child)
+
+
+class DecisionTree(ModelAlgorithm):
 	# def __init__(self, attributes, default):
 	# 	super(DecisionTree, self).__init__()
 	# 	self.tree = DTL(examples, attributes, default)
@@ -32,9 +72,11 @@ class DecisionTree(DistanceAlgorithm):
 		correct_answers = sum([DTL_predict(self.tree, example) == example[1] for example in test])
 		return correct_answers / len(test)
 
-	def print_tree(self, I2F):
+	def print_tree(self, I2F, prune_tree=False):
 		with open("tree.txt", 'w') as file:
 			self.tree = DTL(self.print_examples, self.attributes, self.print_default)
+			if prune_tree:
+				prune_the_tree(self.tree)
 			print_tree_recursive(self.tree, I2F, file)
 
 
@@ -165,5 +207,5 @@ if __name__ == "__main__":
 	algorithm = DecisionTree(data)
 	if args.save_tree:
 		I2F = get_I2F(feature_names)
-		algorithm.print_tree(I2F)
+		algorithm.print_tree(I2F, prune_tree=True)
 	k_cross_validation_acu(algorithm, data, args.k_cross)

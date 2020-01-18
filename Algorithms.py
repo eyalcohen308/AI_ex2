@@ -1,4 +1,4 @@
-class DistanceAlgorithm:
+class ModelAlgorithm:
 	def __init__(self):
 		pass
 
