@@ -169,8 +169,10 @@ def k_cross_validation_acu(algorithm, data, k, shuffle=False):
 		avg_acu += iter_acu
 		print("Iteration {0}/{1} | Algorithm: {2} | accuracy: {3}".format(i + 1, k, type(algorithm).__name__, iter_acu))
 	avg_acu /= k
+	avg_acu = "{0:.2f}".format(avg_acu)
 	print("------- Finished Calculate accuracy -------")
 	print("Algorithm: {0} Aaccuracy: {1}".format(type(algorithm).__name__, avg_acu))
+	return avg_acu
 
 
 if __name__ == "__main__":

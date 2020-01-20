@@ -207,5 +207,5 @@ if __name__ == "__main__":
 	algorithm = DecisionTree(data)
 	if args.save_tree:
 		I2F = get_I2F(feature_names)
-		algorithm.print_tree(I2F, prune_tree=True)
+		algorithm.print_tree(I2F, prune_tree=False)
 	k_cross_validation_acu(algorithm, data, args.k_cross)
