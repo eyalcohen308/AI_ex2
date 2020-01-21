@@ -42,6 +42,15 @@ class Dicts:
 		return self.prior_yes if label == "yes" else self.prior_no
 
 
+def first_time_most_frequent(tags):
+	data = Counter(tags)
+	if len(data) == 2:
+		most_common, second_common = data.most_common(2)
+		if most_common[1] == second_common[1]:
+			return most_common[1]
+	return data.most_common(1)[0][0]
+
+
 def shuffle_data(data, tags):
 	zipped = list(zip(data, tags))
 	random.shuffle(zipped)
@@ -92,7 +101,7 @@ def hamming_distance(point1, point2):
 	return sum(c1 != c2 for c1, c2 in zip(point1, point2))
 
 
-def most_frequent(List):
+def most_frequent(List, equal_default):
 	"""
 	get most frequent value in list.
 	:param List: list
@@ -102,7 +111,7 @@ def most_frequent(List):
 	if len(data) == 2:
 		most_common, second_common = data.most_common(2)
 		if most_common[1] == second_common[1]:
-			return "yes"
+			return equal_default
 	return data.most_common(1)[0][0]
 
 

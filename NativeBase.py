@@ -33,22 +33,28 @@ def get_naive_base_prediction(point, features_dicts):
 
 
 class NaiveBase(ModelAlgorithm):
+	"""
+	Class of Naive base.
+	"""
 	def __init__(self):
 		super(NaiveBase, self).__init__()
 
 	def get_accuracy_on_test(self, train, test):
+		"""
+		get accuracy on test by train and algorithm.
+		:param train: train data.
+		:param test: test data.
+		:return: accuracy
+		"""
 		dicts = Dicts(train)
 		correct_answers = sum([get_naive_base_prediction(example, dicts) == example[1] for example in test])
 
 		return correct_answers / len(test)
 
 
-if __name__ == "__main__":
-	import argparse
+k_cross = 5
 
-	parser = argparse.ArgumentParser(description="AI Ex3")
-	parser.add_argument("--k_cross", help="choose k for k cross validation. default k is 5", type=int, default=5)
-	args = parser.parse_args()
+if __name__ == "__main__":
 	data = parse_data(DATASET_PATH)
 	algorithm = NaiveBase()
-	k_cross_validation_acu(algorithm, data, args.k_cross)
+	k_cross_validation_acu(algorithm, data, k_cross)
