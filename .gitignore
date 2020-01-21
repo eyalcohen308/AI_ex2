@@ -1,2 +1,8 @@
 .idea/
 __pycache__/
+accuracy.txt
+output.txt
+test.txt
+train.txt
+tree.txt
+
